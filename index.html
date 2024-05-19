@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>输入数字</title>
+</head>
+<body>
+    <h1>请输入4个10以内的数字</h1>
+    <form id="numberForm">
+        <label for="number1">数字1:</label>
+        <input type="number" id="number1" name="number1" min="0" max="10" required><br><br>
+        
+        <label for="number2">数字2:</label>
+        <input type="number" id="number2" name="number2" min="0" max="10" required><br><br>
+        
+        <label for="number3">数字3:</label>
+        <input type="number" id="number3" name="number3" min="0" max="10" required><br><br>
+        
+        <label for="number4">数字4:</label>
+        <input type="number" id="number4" name="number4" min="0" max="10" required><br><br>
+        
+        <input type="submit" value="提交">
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        document.getElementById('numberForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            let num1 = parseInt(document.getElementById('number1').value);
+            let num2 = parseInt(document.getElementById('number2').value);
+            let num3 = parseInt(document.getElementById('number3').value);
+            let num4 = parseInt(document.getElementById('number4').value);
+
+            if (num1 <= 10 && num1 >= 0 && num2 <= 10 && num2 >= 0 && num3 <= 10 && num3 >= 0 && num4 <= 10 && num4 >= 0) {
+                let numbers = [num1, num2, num3, num4];
+                
+                function permute(array) {
+                    if (array.length === 1) return [array];
+                    let result = [];
+                    for (let i = 0; i < array.length; i++) {
+                        let rest = permute(array.slice(0, i).concat(array.slice(i + 1)));
+                        for (let j = 0; j < rest.length; j++) {
+                            result.push([array[i]].concat(rest[j]));
+                        }
+                    }
+                    return result;
+                }
+
+                function isCloseEnough(a, b, tolerance = 1e-10) {
+                    return Math.abs(a - b) <= tolerance;
+                }
+
+                let permutations = permute(numbers);
+
+                let resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = '';  // 清空之前的结果
+
+                let foundSolution = false;
+
+                permutations.forEach((perm, index) => {
+                    let A = perm[0];
+                    let B = perm[1];
+                    let C = perm[2];
+                    let D = perm[3];
+
+                    // 进行加减乘除运算并存入数组X
+                    let X = [];
+                    X.push({operation: `${A} + ${B}`, value: A + B});
+                    X.push({operation: `${A} - ${B}`, value: A - B});
+                    X.push({operation: `${B} - ${A}`, value: B - A});
+                    X.push({operation: `${A} * ${B}`, value: A * B});
+                    if (B !== 0) X.push({operation: `${A} / ${B}`, value: A / B});
+                    if (A !== 0) X.push({operation: `${B} / ${A}`, value: B / A});
+
+                    // 进行C与D的加减乘除运算并存入数组S
+                    let S = [];
+                    S.push({operation: `${C} + ${D}`, value: C + D});
+                    S.push({operation: `${C} - ${D}`, value: C - D});
+                    S.push({operation: `${D} - ${C}`, value: D - C});
+                    S.push({operation: `${C} * ${D}`, value: C * D});
+                    if (D !== 0) S.push({operation: `${C} / ${D}`, value: C / D});
+                    if (C !== 0) S.push({operation: `${D} / ${C}`, value: D / C});
+
+                    // 进行S与X的加减乘除运算并存入数组T
+                    let T = [];
+                    S.forEach(sResult => {
+                        X.forEach(xResult => {
+                            T.push({operation: `(${sResult.operation}) + (${xResult.operation})`, value: sResult.value + xResult.value});
+                            T.push({operation: `(${sResult.operation}) - (${xResult.operation})`, value: sResult.value - xResult.value});
+                            T.push({operation: `(${xResult.operation}) - (${sResult.operation})`, value: xResult.value - sResult.value});
+                            T.push({operation: `(${sResult.operation}) * (${xResult.operation})`, value: sResult.value * xResult.value});
+                            if (xResult.value !== 0) T.push({operation: `(${sResult.operation}) / (${xResult.value})`, value: sResult.value / xResult.value});
+                            if (sResult.value !== 0) T.push({operation: `(${xResult.operation}) / (${sResult.operation})`, value: xResult.value / sResult.value});
+                        });
+                    });
+
+                    // 进行C与X中的每一个元素的加减乘除运算并存入数组Y
+                    let Y = [];
+                    X.forEach(result => {
+                        Y.push({operation: `(${result.operation}) + ${C}`, value: result.value + C});
+                        Y.push({operation: `(${result.operation}) - ${C}`, value: result.value - C});
+                        Y.push({operation: `${C} - (${result.operation})`, value: C - result.value});
+                        Y.push({operation: `(${result.operation}) * ${C}`, value: result.value * C});
+                        if (C !== 0) Y.push({operation: `(${result.operation}) / ${C}`, value: result.value / C});
+                        if (result.value !== 0) Y.push({operation: `${C} / (${result.operation})`, value: C / result.value});
+                    });
+
+                    // 进行D与Y中的每一个元素的加减乘除运算并存入数组Z
+                    let Z = [];
+                    Y.forEach(result => {
+                        Z.push({operation: `(${result.operation}) + ${D}`, value: result.value + D});
+                        Z.push({operation: `(${result.operation}) - ${D}`, value: result.value - D});
+                        Z.push({operation: `${D} - (${result.operation})`, value: D - result.value});
+                        Z.push({operation: `(${result.operation}) * ${D}`, value: result.value * D});
+                        if (D !== 0) Z.push({operation: `(${result.operation}) / ${D}`, value: result.value / D});
+                        if (result.value !== 0) Z.push({operation: `${D} / (${result.operation})`, value: D / result.value});
+                    });
+
+                    // 比较Z和T中的每个值是否等于24或-24
+                    Z.concat(T).forEach(result => {
+                        if (isCloseEnough(result.value, 24) || isCloseEnough(result.value, -24)) {
+                            foundSolution = true;
+                            let resultText = document.createElement('p');
+                            resultText.textContent = `排列组合 ${index + 1}: A = ${A}, B = ${B}, C = ${C}, D = ${D} 找到结果等于24或-24的计算步骤: ${result.operation}`;
+                            resultDiv.appendChild(resultText);
+                        }
+                    });
+                });
+
+                if (!foundSolution) {
+                    let noSolutionText = document.createElement('p');
+                    noSolutionText.textContent = '这个组合无法算出24';
+                    resultDiv.appendChild(noSolutionText);
+                }
+
+            } else {
+                alert('请确保所有数字在0到10之间');
+            }
+        });
+    </script>
+</body>
+</html>
